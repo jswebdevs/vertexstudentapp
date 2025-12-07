@@ -1,10 +1,18 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
 
-createRoot(document.getElementById('root')).render(
+import { RouterProvider } from "react-router-dom";
+import Routes from "./routers/Routes";
+import Authprovider from "./context/AuthProvider";
+
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <Authprovider>
+      <RouterProvider
+        router={Routes}
+        fallbackElement={<div>Loading...</div>}
+      ></RouterProvider>
+    </Authprovider>
+  </StrictMode>
+);
