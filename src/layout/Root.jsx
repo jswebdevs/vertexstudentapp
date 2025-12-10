@@ -1,30 +1,36 @@
-import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import Header from "./Header";
+import { Outlet, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import StudentMenu from "./StudentMenu";
 
 const Root = () => {
-  const { user, loading } = useAuth(); // Assuming useAuth provides a loading state
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only navigate if loading is done and no user exists
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
 
-  // Optional: Show a loader while checking auth state
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+        Loading...
+      </div>
+    );
+  }
 
-  // If no user (and effect hasn't run yet), don't render children to prevent flashes
+
   if (!user) return null;
 
   return (
-    <div className="max-w-3xl">
-      {/* Header usually goes above the content */}
-      <Header></Header>
-      <Outlet></Outlet>
+    <div className="flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <Outlet />
+      <div className="absolute z-index-999 bottom-0">
+        <StudentMenu></StudentMenu>
+      </div>
+      
     </div>
   );
 };

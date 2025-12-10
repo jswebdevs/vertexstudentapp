@@ -31,7 +31,7 @@ const getQuizDetails = (quiz, currentTime) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
   const [fullUser, setFullUser] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -56,7 +56,7 @@ const Dashboard = () => {
     [fullUser]
   );
 
-  // 1. Fetch Full User Data (including QuizzesAttended)
+  // 1. Fetch Full User Data
   useEffect(() => {
     const fetchFullUser = async () => {
       if (!user?._id) return;
@@ -89,7 +89,7 @@ const Dashboard = () => {
     fetchQuizzes();
   }, []);
 
-  // 3. Filter Quizzes based on Full User's Courses
+  // 3. Filter Quizzes
   useEffect(() => {
     if (fullUser && fullUser.courses) {
       const enrolledCourseIds = fullUser.courses.map((c) =>
@@ -128,7 +128,7 @@ const Dashboard = () => {
       .padStart(2, "0")}m ${seconds.toString().padStart(2, "0")}s`;
   };
 
-  // --- Active Alerts Logic (Only Ongoing or Urgent & Not Submitted) ---
+  // --- Active Alerts Logic ---
   const activeAlerts = useMemo(() => {
     return filteredQuizzes
       .filter((quiz) => {
@@ -143,10 +143,9 @@ const Dashboard = () => {
       });
   }, [filteredQuizzes, currentTime, attendedQuizzes]);
 
-  // --- Styling Map (Submitted/Blue) ---
+  // --- Styling Map ---
   const getStatusStyles = (status, isSubmitted) => {
     if (isSubmitted) {
-      // Show submitted as Blue
       return "bg-blue-600 text-white shadow-lg shadow-blue-600/50";
     }
     switch (status) {
@@ -163,26 +162,13 @@ const Dashboard = () => {
     }
   };
 
-  // --- Navigation Handler ---
   const handleEnterQuiz = () => {
-    // Redirects to the quizzes page instead of opening a modal
     navigate("/student/quizzes");
   };
 
-  // --- Month Names Definition ---
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
   ];
 
   // --- Render Calendar Grid ---
@@ -228,7 +214,6 @@ const Dashboard = () => {
 
         const statuses = details.map((d) => d.status);
 
-        // Priority: Submitted > Ongoing > Urgent > Upcoming > Completed
         if (isSubmitted) dominantStatus = "submitted";
         else if (statuses.includes("ongoing")) dominantStatus = "ongoing";
         else if (statuses.includes("urgent")) dominantStatus = "urgent";
@@ -239,10 +224,7 @@ const Dashboard = () => {
       daysArray.push(
         <div
           key={day}
-          onClick={() => {
-            // Optional: You could navigate here too if desired
-            // handleEnterQuiz();
-          }}
+          onClick={() => {}}
           onMouseEnter={(e) => {
             if (dailyQuizzes.length === 0) return;
             const content = dailyQuizzes.map((q) => {
@@ -312,223 +294,181 @@ const Dashboard = () => {
   if (!fullUser)
     return (
       <div className="text-center text-sm text-gray-500 mt-5 dark:text-gray-400">
-        Loading user profile and quizzes...
+        Loading user profile...
       </div>
     );
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 sm:p-8 select-none w-full min-h-screen bg-gray-50 dark:bg-gray-900">
-      <AnimatePresence>
-        {/* No Courses Warning */}
-        <h2 className="text-xl text-black dark:text-white py-5"> Welcome to Dashboard, {user.firstName} {user.lastName}</h2>
-
-        {!hasCourses ? (
-          <motion.div
-            key="no-courses"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", damping: 15, stiffness: 100 }}
-            className="w-full max-w-2xl bg-gradient-to-br from-indigo-900/60 via-purple-900/60 to-pink-900/60 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-10 text-center flex flex-col items-center"
-          >
-            <div className="bg-white/10 p-6 rounded-full mb-6 animate-bounce">
-              <FaBookOpen className="text-5xl text-pink-300" />
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              No Active Enrollments
+    // 1. OUTER DESKTOP CONTAINER: Centers the "Phone"
+    <div className="min-h-screen w-full bg-grey-800 flex justify-center items-center overflow-hidden">
+      
+      {/* 2. PHONE FRAME CONTAINER */}
+      <div className="w-full max-w-[600px] h-screen bg-gradient-to-br from-purple- to-pink- dark:bg-gray-900 relative shadow-2xl flex flex-col">
+        
+        {/* 3. SCROLLABLE CONTENT AREA */}
+        {/* 'pb-28' adds space at the bottom so content isn't hidden by the floating menu */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 pb-28 scrollbar-hide">
+          
+          <AnimatePresence>
+            {/* Header / Welcome */}
+            <h2 className="text-xl font-bold text-black dark:text-white py-2 mb-4">
+              Welcome back, <span className="text-pink-500">{user.firstName}</span>
             </h2>
-            <p className="text-gray-300 mb-8 max-w-md text-lg">
-              It looks like you haven't enrolled in any courses yet.
-            </p>
-            <Link
-              to="/courses"
-              className="flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all hover:scale-105 active:scale-95 text-base sm:text-lg"
-            >
-              <FaShoppingCart /> Browse Courses
-            </Link>
-          </motion.div>
-        ) : (
-          /* Calendar View */
-          <motion.div
-            key="calendar-view"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-5xl"
-          >
-            {/* --- WARNING / ALERT SECTION (Ongoing or Urgent) --- */}
-            {activeAlerts.length > 0 && (
-              <div className="flex w-full gap-4 sm:gap-6 justify-center mb-6 flex-wrap">
-                {activeAlerts.map((quiz) => {
-                  const { status, start, end } = getQuizDetails(
-                    quiz,
-                    currentTime
-                  );
-                  const isOngoing = status === "ongoing";
 
-                  return (
-                    <motion.div
-                      key={quiz._id}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      whileHover={{ scale: 1.02 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20,
-                      }}
-                      className={`relative overflow-hidden rounded-xl p-4 sm:p-6 border shadow-2xl backdrop-blur-md transition-all duration-500 min-w-[300px] w-full sm:w-auto ${
-                        isOngoing
-                          ? "bg-pink-900/60 border-pink-400/50 shadow-pink-500/20"
-                          : "bg-indigo-900/60 border-indigo-400/50 shadow-indigo-500/20"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3
-                            className={`font-bold text-lg ${
-                              isOngoing ? "text-pink-100" : "text-indigo-100"
-                            }`}
-                          >
-                            {isOngoing ? "🔴 Live Now: " : "⚠️ Urgent: "}
-                            {quiz.quizTitle}
-                          </h3>
-                          <p className="text-xs text-gray-300 uppercase tracking-wider mb-1">
-                            {quiz.courseTitle}
-                          </p>
-                        </div>
-                      </div>
+            {/* No Courses Warning */}
+            {!hasCourses ? (
+              <motion.div
+                key="no-courses"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: "spring", damping: 15, stiffness: 100 }}
+                className="w-full bg-gradient-to-br from-indigo-900/60 via-purple-900/60 to-pink-900/60 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl p-6 text-center flex flex-col items-center"
+              >
+                <div className="bg-white/10 p-5 rounded-full mb-4 animate-bounce">
+                  <FaBookOpen className="text-4xl text-pink-300" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-3">
+                  No Enrollments
+                </h2>
+                <p className="text-gray-300 mb-6 text-sm">
+                  It looks like you haven't enrolled in any courses yet.
+                </p>
+                <Link
+                  to="/courses"
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2.5 px-6 rounded-full shadow-lg transform transition-all hover:scale-105 active:scale-95 text-sm"
+                >
+                  <FaShoppingCart /> Browse Courses
+                </Link>
+              </motion.div>
+            ) : (
+              /* Calendar View */
+              <motion.div
+                key="calendar-view"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
+                {/* --- WARNING / ALERT SECTION --- */}
+                {activeAlerts.length > 0 && (
+                  <div className="flex flex-col gap-4 mb-6">
+                    {activeAlerts.map((quiz) => {
+                      const { status, start, end } = getQuizDetails(quiz, currentTime);
+                      const isOngoing = status === "ongoing";
 
-                      <div className="mt-3 flex items-center gap-3 bg-black/20 rounded-lg p-2">
-                        <div
-                          className={`text-xl sm:text-2xl font-mono font-bold ${
-                            isOngoing ? "text-pink-300" : "text-indigo-300"
+                      return (
+                        <motion.div
+                          key={quiz._id}
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className={`relative overflow-hidden rounded-2xl p-4 border shadow-xl backdrop-blur-md transition-all duration-500 w-full ${
+                            isOngoing
+                              ? "bg-pink-900/40 border-pink-400/50"
+                              : "bg-indigo-900/40 border-indigo-400/50"
                           }`}
                         >
-                          {isOngoing ? getCountdown(end) : getCountdown(start)}
-                        </div>
-                        <div className="text-xs text-gray-400 flex flex-col leading-tight">
-                          <span>Time until {isOngoing ? "end" : "start"}</span>
-                          <span className="opacity-50">
-                            Make sure to attend!
-                          </span>
-                        </div>
-                      </div>
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className={`font-bold text-base ${isOngoing ? "text-pink-100" : "text-indigo-100"}`}>
+                                {isOngoing ? "🔴 Live Now" : "⚠️ Upcoming"}
+                              </h3>
+                              <p className="text-xs text-white font-semibold mt-1">
+                                {quiz.quizTitle}
+                              </p>
+                              <p className="text-[10px] text-gray-300 uppercase tracking-wider">
+                                {quiz.courseTitle}
+                              </p>
+                            </div>
+                          </div>
 
-                      <button
-                        onClick={handleEnterQuiz} // Navigate to Quizzes page
-                        className={`mt-3 w-full py-2 rounded-lg text-sm font-bold shadow-md transition-transform active:scale-95 ${
-                          isOngoing
-                            ? "bg-pink-600 hover:bg-pink-700 text-white"
-                            : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                        }`}
-                      >
-                        {isOngoing ? "Enter Quiz Now" : "View Details"}
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-            {/* --- MAIN CALENDAR GRID --- */}
-            <div className="w-full bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden p-4 sm:p-6">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <button
-                  onClick={() =>
-                    setCurrentDate(
-                      new Date(
-                        currentDate.getFullYear(),
-                        currentDate.getMonth() - 1,
-                        1
-                      )
-                    )
-                  }
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/20 text-white transition-all active:scale-95"
-                >
-                  <FaChevronLeft />
-                </button>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-md">
-                  {monthNames[currentDate.getMonth()]}{" "}
-                  <span className="text-pink-300">
-                    {currentDate.getFullYear()}
-                  </span>
-                </h2>
-                <button
-                  onClick={() =>
-                    setCurrentDate(
-                      new Date(
-                        currentDate.getFullYear(),
-                        currentDate.getMonth() + 1,
-                        1
-                      )
-                    )
-                  }
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/20 text-white transition-all active:scale-95"
-                >
-                  <FaChevronRight />
-                </button>
-              </div>
+                          <div className="flex items-center gap-3 bg-black/20 rounded-lg p-2 mb-3">
+                            <div className={`text-xl font-mono font-bold ${isOngoing ? "text-pink-300" : "text-indigo-300"}`}>
+                              {isOngoing ? getCountdown(end) : getCountdown(start)}
+                            </div>
+                            <div className="text-[10px] text-gray-400 leading-tight">
+                              <span>Time until {isOngoing ? "end" : "start"}</span>
+                            </div>
+                          </div>
 
-              {/* Days of Week Header */}
-              <div className="grid grid-cols-7 text-center mb-2">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div
-                    key={d}
-                    className="text-pink-200/70 text-xs sm:text-sm font-bold uppercase tracking-widest"
-                  >
-                    {d}
+                          <button
+                            onClick={handleEnterQuiz}
+                            className={`w-full py-2 rounded-lg text-xs font-bold shadow-md transition-transform active:scale-95 ${
+                              isOngoing
+                                ? "bg-pink-600 text-white"
+                                : "bg-indigo-600 text-white"
+                            }`}
+                          >
+                            {isOngoing ? "Enter Quiz" : "Details"}
+                          </button>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                )}
 
-              {/* Days Grid */}
-              <div className="grid grid-cols-7 gap-2">
-                {renderCalendarDays()}
-              </div>
+                {/* --- MAIN CALENDAR GRID --- */}
+                <div className="w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 backdrop-blur-md border border-white/10 rounded-3xl shadow-xl overflow-hidden p-3 sm:p-5">
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-4">
+                    <button
+                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+                      className="p-2 rounded-full bg-white/5 hover:bg-white/20 text-white active:scale-95"
+                    >
+                      <FaChevronLeft size={12} />
+                    </button>
+                    <h2 className="text-lg font-bold text-white">
+                      {monthNames[currentDate.getMonth()]} <span className="text-pink-400">{currentDate.getFullYear()}</span>
+                    </h2>
+                    <button
+                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+                      className="p-2 rounded-full bg-white/5 hover:bg-white/20 text-white active:scale-95"
+                    >
+                      <FaChevronRight size={12} />
+                    </button>
+                  </div>
 
-              {/* Legend */}
-              <div className="mt-8 flex flex-wrap justify-center gap-4 sm:gap-6 text-[10px] sm:text-xs font-medium text-gray-300 uppercase tracking-widest">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-pink-600 shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse"></div>
-                  Live
+                  {/* Days Header */}
+                  <div className="grid grid-cols-7 text-center mb-2">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                      <div key={d} className="text-pink-200/50 text-[10px] font-bold uppercase">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                    {renderCalendarDays()}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="mt-6 flex flex-wrap justify-center gap-3 text-[12px] font-medium text-gray-800 uppercase tracking-widest border-t border-white/5 pt-4">
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-600 animate-pulse"></div> Live</div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-600"></div> Urgent</div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-600"></div> Next</div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div>Finished</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.6)]"></div>
-                  Urgent
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-purple-600"></div>
-                  Upcoming
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
-                  Submitted
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-700"></div>
-                  Done
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
       {/* Tooltip Portal */}
       {tooltip.visible && (
         <div
-          className="fixed z-50 p-4 bg-gray-900/95 text-white text-xs rounded-xl shadow-2xl border border-white/10 backdrop-blur-md pointer-events-none transform -translate-x-1/2 mt-4"
-          style={{ top: tooltip.y, left: tooltip.x, minWidth: "220px" }}
+          className="fixed z-[60] p-3 bg-gray-950/95 text-white text-xs rounded-xl shadow-2xl border border-white/10 backdrop-blur-md pointer-events-none"
+          // Safety logic to keep tooltip on screen
+          style={{ 
+            top: Math.min(tooltip.y + 10, window.innerHeight - 150), 
+            left: Math.max(10, Math.min(tooltip.x - 100, window.innerWidth - 220)),
+            width: "200px" 
+          }}
         >
-          <div className="mb-2 pb-2 border-b border-white/10 font-bold text-center uppercase tracking-wider text-[10px] text-gray-400">
-            {tooltip.status === "urgent"
-              ? "⚠️ Action Required"
-              : tooltip.status === "ongoing"
-              ? "🔴 Happening Now"
-              : tooltip.status === "submitted"
-              ? "✅ Submitted"
-              : "Quiz Information"}
+          <div className="mb-1 pb-1 border-b border-white/10 font-bold text-center uppercase tracking-wider text-[10px] text-gray-400">
+             Quiz Info
           </div>
           {tooltip.content}
         </div>
